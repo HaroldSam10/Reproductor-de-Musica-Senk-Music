@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SenkMusic">
         <activity
+            android:name=".index_music"
+            android:exported="false" />
+        <activity
             android:name=".Login"
             android:exported="true">
             <intent-filter>
