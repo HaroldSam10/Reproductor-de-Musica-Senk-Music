@@ -1,46 +1,53 @@
 package com.example.senkmusic
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class Login : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_login)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-    }
 
-
-    ///   "CARRUSEL" DEL LOGINNNNN
-    val fondos = arrayOf(
+    private val fondos = arrayOf(
         R.drawable.car_login_1,
         R.drawable.car_login_2,
         R.drawable.car_login_3
     )
 
-    var index = 0
+    private var index = 0
 
-    fun cambiarFondo() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_login)
+
+
+
+        // Iniciar la animación de cambio de fondo
+        iniciarCambioFondo()
+    }
+
+
+    ///FONDOS DINAMICOSSS
+    private fun cambiarFondo() {
         val imageView = findViewById<ImageView>(R.id.imgFondo)
         imageView.setImageResource(fondos[index])
         index = (index + 1) % fondos.size
     }
 
-    Handler(Looper.getMainLooper()).postDelayed(object : Runnable {
-        override fun run() {
-            cambiarFondo()
-            Handler(Looper.getMainLooper()).postDelayed(this, 5000)
-        }
-    }, 5000)
+    private fun iniciarCambioFondo() {
+        val handler = Handler(Looper.getMainLooper())
+        handler.post(object : Runnable {
+            override fun run() {
+                cambiarFondo()
+                handler.postDelayed(this, 4000) // Cambia fondo cada 5 segundos
+            }
+        })
+    }
+    //////////////
 
-    ////////////////////////////////////////////
 
 }
