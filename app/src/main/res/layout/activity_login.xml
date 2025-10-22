@@ -1,32 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Imagen de fondo -->
+
+
+
     <ImageView
         android:id="@+id/imgFondo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
         android:src="@drawable/car_login_1"
-        />
+        tools:layout_editor_absoluteX="61dp"
+        tools:layout_editor_absoluteY="0dp" />
 
-    <!-- Ahora aquí pones tus inputs encima -->
     <EditText
         android:id="@+id/edtUser"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="276dp"
+        android:layout_height="46dp"
         android:layout_margin="32dp"
-        android:background="@android:color/white"
+
+        android:background="@drawable/edittext_border_green"
+        android:gravity="center_vertical"
         android:hint="Usuario"
+        android:paddingStart="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="#2CE6B0"
+
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.488"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.224" />
+        app:layout_constraintVertical_bias="0.321" />
 
-    <!-- Continua con tus otros elementos... -->
+    <EditText
+        android:id="@+id/edtPass"
+        android:layout_width="276dp"
+        android:layout_height="46dp"
+        android:layout_margin="32dp"
+
+        android:background="@drawable/edittext_border_green"
+        android:gravity="center_vertical"
+        android:hint="Contraseña"
+        android:paddingStart="16dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="#2CE6B0"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.474"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.426" />
+
+    <TextView
+        android:id="@+id/textTitle"
+        android:layout_width="343dp"
+        android:layout_height="128dp"
+
+        android:fontFamily=""
+        android:text="BIENVENIDO A SENK MUSIC!"
+        android:textColor="#2CE6B0"
+        android:textSize="20pt"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.494"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.077" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
