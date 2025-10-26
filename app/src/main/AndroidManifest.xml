@@ -12,6 +12,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SenkMusic">
         <activity
+            android:name=".Repro_Musenk"
+            android:exported="false" />
+        <activity
             android:name=".index_music"
             android:exported="false" />
         <activity

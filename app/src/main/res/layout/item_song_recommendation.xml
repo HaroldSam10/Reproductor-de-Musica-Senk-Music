@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="12dp">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardSongCover"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:cardCornerRadius="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/imgSongCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            tools:src="@drawable/car_login_2" />
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:id="@+id/textSongTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:fontFamily="@font/karantina_regular"
+        android:text="ESTA FORMA DE AMARTE"
+        android:textColor="@android:color/white"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toStartOf="@+id/textSongDuration"
+        app:layout_constraintStart_toEndOf="@+id/cardSongCover"
+        app:layout_constraintTop_toTopOf="@+id/cardSongCover" />
+
+    <TextView
+        android:id="@+id/textArtistName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/karantina_regular"
+        android:text="Jorge Dominguez"
+        android:textColor="@android:color/white"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="@+id/textSongTitle"
+        app:layout_constraintTop_toBottomOf="@+id/textSongTitle" />
+
+    <TextView
+        android:id="@+id/textSongDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/karantina_regular"
+        android:text="2:42"
+        android:textColor="@android:color/white"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/textSongTitle" />
+
+    <LinearLayout
+        android:id="@+id/tagsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="@+id/textArtistName"
+        app:layout_constraintTop_toBottomOf="@+id/textArtistName">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/edittext_border_new"
+            android:fontFamily="@font/karantina_regular"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="Triste"
+            android:textColor="#30CCC4"
+            android:textSize="18sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/edittext_border_new"
+            android:fontFamily="@font/karantina_regular"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="Extrañar"
+            android:textColor="#30CCC4"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/dividerRow"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="#30CCC4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tagsContainer" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
