@@ -52,9 +52,19 @@ class SongAdapter(private val context: Context, private val songs: List<Song>) :
 
         // El clic para abrir el reproductor
         holder.itemView.setOnClickListener {
-            val intent = Intent(context, Repro_Musenk::class.java)
-            intent.putExtra("SONG_DATA", song)
-            context.startActivity(intent)
+            // 1. Prepara el Intent para el SERVICIO
+            val serviceIntent = Intent(context, MusicService::class.java)
+
+            // 2. Le pasamos la lista completa y la posición
+            serviceIntent.putExtra("CURRENT_SONG_INDEX", position)
+            serviceIntent.putParcelableArrayListExtra("SONG_LIST", ArrayList(songs))
+
+            // 3. Encendemos la "bocina" (el servicio)
+            context.startService(serviceIntent)
+
+            // 4. ABRIMOS el "control remoto" (la pantalla del reproductor)
+            val activityIntent = Intent(context, Repro_Musenk::class.java)
+            context.startActivity(activityIntent)
         }
     }
 }

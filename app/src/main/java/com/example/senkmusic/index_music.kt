@@ -29,7 +29,8 @@ class index_music : AppCompatActivity() {
         val dummySongs = listOf(
             Song("ESTA FORMA DE AMARTE", "Jorge Dominguez", "2:42","portadas/jorge.jpg" , R.raw.esta_forma_de_amarte),
             Song("ENSEÑAME A OLVIDAR", "Aventura", "5:48", "portadas/aventura.jpg" , R.raw.ensename_a_olvidar), //
-            Song("SIRENA", "Sin Bandera", "4:15", "portadas/sinbandera_sirena.jpeg", R.raw.sirena)
+            Song("SIRENA", "Sin Bandera", "4:15", "portadas/sinbandera_sirena.jpeg", R.raw.sirena),
+            Song("NO CAPEA", "Xavi, Grupo Frontera", "3:20", "portadas/no_capea.jpg", R.raw.no_capea)
         )
 
         // 3. Crear el Adaptador y dárselo al RecyclerView
