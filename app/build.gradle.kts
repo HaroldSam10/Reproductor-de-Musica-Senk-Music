@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize") // <-- ¡ESTA ES LA LÍNEA QUE FALTABA!
 }
 
 android {
@@ -27,8 +28,6 @@ android {
         }
     }
 
-
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -46,8 +45,6 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation("androidx.activity:activity-ktx:1.9.0")
-
-
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

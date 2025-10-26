@@ -31,8 +31,8 @@ class Login : AppCompatActivity() {
         val edtPass = findViewById<EditText>(R.id.edtPass)
         val btn_Inicio = findViewById<Button>(R.id.button)
 
-        val enid = "harold1417"
-        val enid2 = "renosenk1417"
+        val enid = "111"
+        val enid2 = "222"
 
         btn_Inicio.setOnClickListener{
             val user_input = edtUser.text.toString()
