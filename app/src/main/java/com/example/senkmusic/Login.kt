@@ -21,7 +21,7 @@ class Login : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_login)
 
-        supportActionBar?.hide() // <-- AÑADE ESTA LÍNEA AQUÍ
+        supportActionBar?.hide()
 
         // Iniciar la animación de cambio de fondo
         iniciarCambioFondo()
