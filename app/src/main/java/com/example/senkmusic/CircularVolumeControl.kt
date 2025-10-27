@@ -75,28 +75,29 @@ class CircularVolumeControl @JvmOverloads constructor(
         val x = event.x
         val y = event.y
 
-       
+        // --- Chequeo de Radio (CON ANILLO MÁS ANCHO) ---
         val radius = width / 2f
         val touchRadius = sqrt((x - centerX).pow(2) + (y - centerY).pow(2))
-        val arcOuterRadius = radius
-        val arcInnerRadius = radius - strokeWidth * 2.0 // Área táctil generosa
+        // Hacemos el anillo el DOBLE de ancho que el trazo visual
+        val touchRingWidth = strokeWidth * 4.0 // Ej: Si stroke=8dp, el anillo táctil tendrá 32dp de ancho total
+        val arcOuterRadius = radius + (touchRingWidth / 2) // Se extiende hacia afuera
+        val arcInnerRadius = radius - (touchRingWidth / 2) // Se extiende hacia adentro
+
         if (touchRadius < arcInnerRadius || touchRadius > arcOuterRadius) {
             if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) { return super.onTouchEvent(event) }
-            return false // Ignorar toque fuera
+            return false // Ignorar toque fuera del anillo MÁS ANCHO
         }
 
-        // Cálculo del Ángulo (0-360, 0 es ARRIBA, horario)
+        // --- Cálculo del Ángulo (0-360, 0 es ARRIBA, horario) ---
         var angle = Math.toDegrees(atan2(y - centerY, x - centerX).toDouble()) + 90
         if (angle < 0) { angle += 360 }
 
         when (event.action) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
 
-                // Límites de la ZONA MUERTA INFERIOR
+                // --- Lógica con Zona Muerta INFERIOR (135-225) ---
                 val deadZoneStart = 135.0
                 val deadZoneEnd = 225.0
-
-                // Límite VISUAL de inicio
                 val visualStartAngle = 135.0
                 val totalArcDegrees = 270.0
 
@@ -108,14 +109,12 @@ class CircularVolumeControl @JvmOverloads constructor(
                     // Calculamos el progreso relativo al inicio VISUAL
                     if (angle >= 225) { // 225 a 360
                         calculatedSweepAngle = angle - 225.0 // Mapea 225->0, 360->135
-                    } else { // 0 a <135 (pasó la zona muerta inicial)
+                    } else { // 0 a <135
                         calculatedSweepAngle = (360.0 - 225.0) + angle // Mapea 0->135, 135->270
                     }
 
-                    // --- ¡AQUÍ ESTÁ EL ARREGLO! ---
-                    // Solo procedemos si SÍ calculamos un ángulo (no era null)
+                    // Solo procedemos si SÍ calculamos un ángulo
                     if (calculatedSweepAngle != null) {
-                        // Aseguramos rango 0-270
                         sweepAngle = calculatedSweepAngle.coerceIn(0.0, totalArcDegrees).toFloat()
                         invalidate() // Redibujar
 
@@ -123,13 +122,12 @@ class CircularVolumeControl @JvmOverloads constructor(
                         val newPercentage = sweepAngle / totalArcDegrees.toFloat()
                         onVolumeChanged?.invoke(newPercentage.coerceIn(0f, 1f))
                     }
-
                 }
+                // Si está en la zona muerta, no hacemos nada
 
-
-                return true
+                return true // Manejamos el toque
             }
             else -> return super.onTouchEvent(event)
         }
-    }
+    } // Fin de onTouchEvent
 }

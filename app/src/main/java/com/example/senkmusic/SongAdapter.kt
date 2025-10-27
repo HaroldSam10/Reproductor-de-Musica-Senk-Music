@@ -37,7 +37,7 @@ class SongAdapter(private val context: Context, private val songs: List<Song>) :
         holder.artistName.text = song.artist
         holder.songDuration.text = song.duration
 
-        // --- CÓDIGO PARA CARGAR DESDE ASSETS ---
+        // COMO CARGAR DESDE OTRA CAPEYTA FUERA DE DRAWABLE
         try {
             val assetManager = context.assets
             val inputStream = assetManager.open(song.coverArt)
@@ -48,21 +48,21 @@ class SongAdapter(private val context: Context, private val songs: List<Song>) :
             holder.songCover.setImageResource(R.drawable.ic_launcher_background) // Imagen de error
             e.printStackTrace()
         }
-        // --- FIN DEL CÓDIGO ---
+        //
 
         // El clic para abrir el reproductor
         holder.itemView.setOnClickListener {
             // 1. Prepara el Intent para el SERVICIO
             val serviceIntent = Intent(context, MusicService::class.java)
 
-            // 2. Le pasamos la lista completa y la posición
+            //  Le pasamos la lista completa y la posición
             serviceIntent.putExtra("CURRENT_SONG_INDEX", position)
             serviceIntent.putParcelableArrayListExtra("SONG_LIST", ArrayList(songs))
 
-            // 3. Encendemos la "bocina" (el servicio)
+            //  Encendemos la bocina (el servicio)
             context.startService(serviceIntent)
 
-            // 4. ABRIMOS el "control remoto" (la pantalla del reproductor)
+            //  ABRIMOS la pantalla del reproductor
             val activityIntent = Intent(context, Repro_Musenk::class.java)
             context.startActivity(activityIntent)
         }
