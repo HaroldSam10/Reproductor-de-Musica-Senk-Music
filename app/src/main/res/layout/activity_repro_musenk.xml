@@ -108,16 +108,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <ProgressBar
+        <com.example.senkmusic.CircularVolumeControl
             android:id="@+id/volumeArc"
-            style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:indeterminate="false"
-            android:max="100"
-            android:progress="70"
-            android:progressDrawable="@drawable/progress_bar_volume_arc"
-            android:rotation="-90"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -210,7 +204,7 @@
         android:layout_marginEnd="24dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_volume_up"
-        app:layout_constraintBottom_toBottomOf="@+id/controlWheelContainer"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/controlWheelContainer" />
     <ImageButton
@@ -220,7 +214,7 @@
         android:layout_marginStart="24dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_volume_off"
-        app:layout_constraintBottom_toBottomOf="@+id/controlWheelContainer"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/controlWheelContainer" />
 

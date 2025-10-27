@@ -87,7 +87,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerTusEscuchados"
         android:layout_width="0dp"
-        android:layout_height="130dp"
+        android:layout_height="110dp"
         android:layout_marginTop="4dp"
         android:orientation="horizontal"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -145,8 +145,8 @@
             android:orientation="vertical">
 
             <androidx.cardview.widget.CardView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 app:cardBackgroundColor="#0000FF"
                 app:cardCornerRadius="12dp" />
 
@@ -172,8 +172,8 @@
             android:orientation="vertical">
 
             <androidx.cardview.widget.CardView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 app:cardBackgroundColor="#FFEB3B"
                 app:cardCornerRadius="12dp" />
 
@@ -199,8 +199,8 @@
             android:orientation="vertical">
 
             <androidx.cardview.widget.CardView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
                 app:cardBackgroundColor="#E91E63"
                 app:cardCornerRadius="12dp" />
 

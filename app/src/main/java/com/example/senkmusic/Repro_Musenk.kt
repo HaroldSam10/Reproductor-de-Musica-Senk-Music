@@ -13,7 +13,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.io.IOException
+import androidx.core.view.WindowCompat
+
 
 class Repro_Musenk : AppCompatActivity() {
 
@@ -22,26 +26,26 @@ class Repro_Musenk : AppCompatActivity() {
     private lateinit var textArtist: TextView
     private lateinit var albumArt: ImageView
     private lateinit var btnPlayPause: ImageButton
+    private lateinit var volumeArc: CircularVolumeControl // <-- AÑADIDO
 
     // --- Variables del Servicio ---
     private var musicService: MusicService? = null
-    private var isBound = false // Nos dice si estamos conectados a la "bocina"
+    private var isBound = false
 
-    // "ServiceConnection" es el "cable" que conecta el control remoto a la bocina
+    // "ServiceConnection" (el "cable" se queda igual)
     private val connection = object : ServiceConnection {
-
-        // Se llama cuando el cable se conecta
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as MusicService.MusicBinder
             musicService = binder.getService()
             isBound = true
 
-            // ¡Ya estamos conectados! Actualizamos la UI con lo que esté sonando
             updateUI(musicService?.getCurrentSong())
             updatePlayPauseButton()
+
+            // --- AÑADIDO: Actualizamos la rueda con el volumen actual ---
+            updateVolumeArc()
         }
 
-        // Se llama si la conexión se pierde
         override fun onServiceDisconnected(name: ComponentName?) {
             isBound = false
         }
@@ -52,6 +56,12 @@ class Repro_Musenk : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_repro_musenk)
         supportActionBar?.hide()
+
+        //AQUI OCULTAMOS LOS BOTONES PAPIIIIIII
+        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        insetsController.hide(WindowInsetsCompat.Type.navigationBars())
+        insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
 
         // --- Encontrar Views ---
         textTitle = findViewById(R.id.textSongTitlePlayer)
@@ -64,18 +74,19 @@ class Repro_Musenk : AppCompatActivity() {
         val btnVolUp = findViewById<ImageButton>(R.id.btnVolUp)
         val btnVolOff = findViewById<ImageButton>(R.id.btnVolOff)
         val btnHome = findViewById<ImageButton>(R.id.btnWheelHome)
+        volumeArc = findViewById(R.id.volumeArc) // <-- AÑADIDO
 
         // --- Programar Botones ---
-        setupVolumeButtons(btnVolUp, btnVolOff)
+
+        // ¡REEMPLAZAMOS la llamada a la función de volumen!
+        setupFullVolumeControls(btnVolUp, btnVolOff, volumeArc)
 
         btnPlayPause.setOnClickListener {
-            musicService?.playPause() // Le decimos al SERVICIO que se pause
+            musicService?.playPause()
             updatePlayPauseButton()
         }
         btnWheelNext.setOnClickListener {
             musicService?.playNextSong()
-            // (El servicio tocará la siguiente y necesitamos que nos avise)
-            // Por ahora, actualizamos la UI manualmente (idealmente el servicio nos avisaría)
             updateUI(musicService?.getCurrentSong())
             updatePlayPauseButton()
         }
@@ -85,29 +96,23 @@ class Repro_Musenk : AppCompatActivity() {
             updatePlayPauseButton()
         }
 
-        // --- ¡CUMPLIENDO TUS REGLAS! ---
-
-        // 1. Botón 'X' (Mata la música y cierra)
+        // Tus reglas de 'X' y 'Home' (se quedan igual)
         btnClose.setOnClickListener {
-            musicService?.stopMusicAndService() // Le dice al servicio que se detenga y muera
+            musicService?.stopMusicAndService()
             if (isBound) {
                 unbindService(connection)
                 isBound = false
             }
-            finish() // Cierra el "control remoto"
+            finish()
         }
-
-        // 2. Botón 'Home' de la rueda (Solo cierra el "control remoto")
         btnHome.setOnClickListener {
-            finish() // La música sigue sonando
+            finish()
         }
     } // Fin de onCreate
 
-    // --- Conectar y Desconectar el "cable" ---
-
+    // --- Conectar y Desconectar el "cable" (se queda igual) ---
     override fun onStart() {
         super.onStart()
-        // Cuando la pantalla aparece, nos "conectamos" al servicio
         Intent(this, MusicService::class.java).also { intent ->
             bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
@@ -115,16 +120,13 @@ class Repro_Musenk : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Cuando la pantalla se oculta (con 'Back' o 'Home'), nos "desconectamos"
-        // ¡PERO EL SERVICIO (LA MÚSICA) SIGUE VIVO!
         if (isBound) {
             unbindService(connection)
             isBound = false
         }
     }
 
-    // --- Funciones de UI ---
-
+    // --- Funciones de UI (updateUI se queda igual) ---
     private fun updateUI(song: Song?) {
         if (song == null) return
         textTitle.text = song.title
@@ -139,6 +141,8 @@ class Repro_Musenk : AppCompatActivity() {
         }
     }
 
+    // --- AÑADIDO: Lógica para el botón Play/Pause ---
+    // (Tu versión anterior tenía un error, siempre ponía play_arrow)
     private fun updatePlayPauseButton() {
         if (musicService?.isPlaying() == true) {
             btnPlayPause.setImageResource(R.drawable.ic_play_arrow)
@@ -147,13 +151,38 @@ class Repro_Musenk : AppCompatActivity() {
         }
     }
 
-    private fun setupVolumeButtons(btnUp: ImageButton, btnOff: ImageButton) {
+    // --- ¡NUEVA! Función para actualizar la rueda ---
+    private fun updateVolumeArc() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val currentPercentage = currentVolume.toFloat() / maxVolume.toFloat()
+        volumeArc.setProgress(currentPercentage)
+    }
+
+    // --- ¡REEMPLAZAMOS setupVolumeButtons CON ESTA NUEVA FUNCIÓN! ---
+    private fun setupFullVolumeControls(btnUp: ImageButton, btnOff: ImageButton, arc: CircularVolumeControl) {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+
+        // "Escuchamos" cuando el usuario mueva la rueda
+        arc.onVolumeChanged = { newPercentage ->
+            val newVolume = (newPercentage * maxVolume).toInt()
+            audioManager.setStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                newVolume,
+                0 // Sin UI nativa
+            )
+        }
+
+        // Hacemos que los botones de los lados también muevan la rueda
         btnUp.setOnClickListener {
-            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI)
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0)
+            updateVolumeArc() // Actualizamos la rueda
         }
         btnOff.setOnClickListener {
-            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI)
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0)
+            updateVolumeArc() // Actualizamos la rueda
         }
     }
 }
