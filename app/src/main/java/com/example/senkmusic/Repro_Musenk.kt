@@ -7,17 +7,22 @@ import android.content.ServiceConnection
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import java.io.IOException
-import androidx.core.view.WindowCompat
-
+import java.util.concurrent.TimeUnit
 
 class Repro_Musenk : AppCompatActivity() {
 
@@ -26,13 +31,21 @@ class Repro_Musenk : AppCompatActivity() {
     private lateinit var textArtist: TextView
     private lateinit var albumArt: ImageView
     private lateinit var btnPlayPause: ImageButton
-    private lateinit var volumeArc: CircularVolumeControl // <-- AÑADIDO
+    private lateinit var volumeArc: CircularVolumeControl
+
+    // ¡NUEVO! Variables para el SeekBar
+    private lateinit var cardAlbumArtPlayer: CardView
+    private lateinit var seekBarContainer: LinearLayout
+    private lateinit var songSeekBar: SeekBar
+    private lateinit var textCurrentTime: TextView
+    private lateinit var textTotalTime: TextView
+    private val handler = Handler(Looper.getMainLooper())
+    private var isSeekBarVisible = false // Controla la "vuelta"
 
     // --- Variables del Servicio ---
     private var musicService: MusicService? = null
     private var isBound = false
 
-    // "ServiceConnection" (el "cable" se queda igual)
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as MusicService.MusicBinder
@@ -41,11 +54,12 @@ class Repro_Musenk : AppCompatActivity() {
 
             updateUI(musicService?.getCurrentSong())
             updatePlayPauseButton()
-
-            // --- AÑADIDO: Actualizamos la rueda con el volumen actual ---
             updateVolumeArc()
-        }
 
+            // ¡NUEVO! Configura e inicia el SeekBar
+            setupSeekBar()
+            runOnUiThread(updateSeekBarTask)
+        }
         override fun onServiceDisconnected(name: ComponentName?) {
             isBound = false
         }
@@ -55,15 +69,15 @@ class Repro_Musenk : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_repro_musenk)
-        supportActionBar?.hide()
 
-        //AQUI OCULTAMOS LOS BOTONES PAPIIIIIII
+        // --- Ocultar barras del sistema ---
+        supportActionBar?.hide()
         val insetsController = WindowInsetsControllerCompat(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.navigationBars())
         insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        // ---
 
-
-        // --- Encontrar Views ---
+        // --- Encontrar Views (TODAS) ---
         textTitle = findViewById(R.id.textSongTitlePlayer)
         textArtist = findViewById(R.id.textArtistNamePlayer)
         albumArt = findViewById(R.id.imgAlbumArtPlayer)
@@ -74,43 +88,121 @@ class Repro_Musenk : AppCompatActivity() {
         val btnVolUp = findViewById<ImageButton>(R.id.btnVolUp)
         val btnVolOff = findViewById<ImageButton>(R.id.btnVolOff)
         val btnHome = findViewById<ImageButton>(R.id.btnWheelHome)
-        volumeArc = findViewById(R.id.volumeArc) // <-- AÑADIDO
+        volumeArc = findViewById(R.id.volumeArc)
+
+        // ¡NUEVO! Views del SeekBar
+        cardAlbumArtPlayer = findViewById(R.id.cardAlbumArtPlayer)
+        seekBarContainer = findViewById(R.id.seekBarContainer)
+        songSeekBar = findViewById(R.id.songSeekBar)
+        textCurrentTime = findViewById(R.id.textCurrentTime)
+        textTotalTime = findViewById(R.id.textTotalTime)
 
         // --- Programar Botones ---
-
-        // ¡REEMPLAZAMOS la llamada a la función de volumen!
         setupFullVolumeControls(btnVolUp, btnVolOff, volumeArc)
+        setupClickListeners(btnClose, btnHome, btnWheelNext, btnWheelPrev)
 
+        // ¡NUEVO! Lógica de la "vuelta"
+        cardAlbumArtPlayer.setOnClickListener { toggleSeekBarVisibility() }
+        seekBarContainer.setOnClickListener { toggleSeekBarVisibility() }
+
+    } // Fin de onCreate
+
+    // --- Tarea que se ejecuta cada segundo para actualizar el SeekBar ---
+    private val updateSeekBarTask = object : Runnable {
+        override fun run() {
+            if (isBound && musicService != null) {
+                val currentPosition = musicService!!.getCurrentPosition()
+                songSeekBar.progress = currentPosition
+                textCurrentTime.text = formatDuration(currentPosition.toLong())
+
+                // Vuelve a ejecutarse a sí misma después de 1 segundo
+                handler.postDelayed(this, 1000)
+            }
+        }
+    }
+
+    // --- Configuración de los botones (excepto Play) ---
+    private fun setupClickListeners(btnClose: ImageButton, btnHome: ImageButton, btnNext: ImageButton, btnPrev: ImageButton) {
         btnPlayPause.setOnClickListener {
             musicService?.playPause()
             updatePlayPauseButton()
         }
-        btnWheelNext.setOnClickListener {
+        btnNext.setOnClickListener {
             musicService?.playNextSong()
             updateUI(musicService?.getCurrentSong())
             updatePlayPauseButton()
+            setupSeekBar() // Resetea el seekbar para la nueva canción
         }
-        btnWheelPrev.setOnClickListener {
+        btnPrev.setOnClickListener {
             musicService?.playPreviousSong()
             updateUI(musicService?.getCurrentSong())
             updatePlayPauseButton()
+            setupSeekBar() // Resetea el seekbar para la nueva canción
         }
-
-        // Tus reglas de 'X' y 'Home' (se quedan igual)
         btnClose.setOnClickListener {
             musicService?.stopMusicAndService()
-            if (isBound) {
-                unbindService(connection)
-                isBound = false
-            }
+            if (isBound) unbindService(connection)
+            isBound = false
+            handler.removeCallbacks(updateSeekBarTask) // Detiene el actualizador
             finish()
         }
         btnHome.setOnClickListener {
-            finish()
+            finish() // La música sigue (el handler se detendrá en onStop)
         }
-    } // Fin de onCreate
+    }
 
-    // --- Conectar y Desconectar el "cable" (se queda igual) ---
+    // --- ¡NUEVO! Configuración del SeekBar ---
+    private fun setupSeekBar() {
+        if (musicService == null) return
+
+        val duration = musicService!!.getDuration()
+        songSeekBar.max = duration
+        textTotalTime.text = formatDuration(duration.toLong())
+
+        songSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    textCurrentTime.text = formatDuration(progress.toLong())
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            // Cuando el usuario suelta el dedo
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                seekBar?.let {
+                    musicService?.seekTo(it.progress) // Le decimos al servicio que salte
+                }
+            }
+        })
+    }
+
+    // --- ¡NUEVO! Lógica de la "vuelta" (animación) ---
+    private fun toggleSeekBarVisibility() {
+        if (isSeekBarVisible) {
+            // Ocultar SeekBar, mostrar Portada
+            cardAlbumArtPlayer.animate().alpha(1f).duration = 300
+            seekBarContainer.animate().alpha(0f).withEndAction {
+                seekBarContainer.visibility = View.GONE
+            }.duration = 300
+        } else {
+            // Ocultar Portada, mostrar SeekBar
+            cardAlbumArtPlayer.animate().alpha(0f).duration = 300
+            seekBarContainer.alpha = 0f
+            seekBarContainer.visibility = View.VISIBLE
+            seekBarContainer.animate().alpha(1f).duration = 300
+        }
+        isSeekBarVisible = !isSeekBarVisible
+    }
+
+    // --- ¡NUEVO! Formateador de tiempo ---
+    private fun formatDuration(ms: Long): String {
+        val minutes = TimeUnit.MILLISECONDS.toMinutes(ms)
+        val seconds = TimeUnit.MILLISECONDS.toSeconds(ms) -
+                TimeUnit.MINUTES.toSeconds(minutes)
+        return String.format("%d:%02d", minutes, seconds)
+    }
+
+    // --- Conectar y Desconectar el "cable" (y el Handler) ---
     override fun onStart() {
         super.onStart()
         Intent(this, MusicService::class.java).also { intent ->
@@ -124,9 +216,11 @@ class Repro_Musenk : AppCompatActivity() {
             unbindService(connection)
             isBound = false
         }
+        // ¡Importante! Detiene el actualizador si la app se va a fondo
+        handler.removeCallbacks(updateSeekBarTask)
     }
 
-    // --- Funciones de UI (updateUI se queda igual) ---
+    // --- Funciones de UI (actualizadas) ---
     private fun updateUI(song: Song?) {
         if (song == null) return
         textTitle.text = song.title
@@ -141,8 +235,6 @@ class Repro_Musenk : AppCompatActivity() {
         }
     }
 
-    // --- AÑADIDO: Lógica para el botón Play/Pause ---
-    // (Tu versión anterior tenía un error, siempre ponía play_arrow)
     private fun updatePlayPauseButton() {
         if (musicService?.isPlaying() == true) {
             btnPlayPause.setImageResource(R.drawable.ic_play_arrow)
@@ -151,7 +243,6 @@ class Repro_Musenk : AppCompatActivity() {
         }
     }
 
-    // --- ¡NUEVA! Función para actualizar la rueda ---
     private fun updateVolumeArc() {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
@@ -160,29 +251,21 @@ class Repro_Musenk : AppCompatActivity() {
         volumeArc.setProgress(currentPercentage)
     }
 
-    // --- ¡REEMPLAZAMOS setupVolumeButtons CON ESTA NUEVA FUNCIÓN! ---
     private fun setupFullVolumeControls(btnUp: ImageButton, btnOff: ImageButton, arc: CircularVolumeControl) {
         val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
 
-        // "Escuchamos" cuando el usuario mueva la rueda
         arc.onVolumeChanged = { newPercentage ->
             val newVolume = (newPercentage * maxVolume).toInt()
-            audioManager.setStreamVolume(
-                AudioManager.STREAM_MUSIC,
-                newVolume,
-                0 // Sin UI nativa
-            )
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolume, 0)
         }
-
-        // Hacemos que los botones de los lados también muevan la rueda
         btnUp.setOnClickListener {
             audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0)
-            updateVolumeArc() // Actualizamos la rueda
+            updateVolumeArc()
         }
         btnOff.setOnClickListener {
             audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, 0)
-            updateVolumeArc() // Actualizamos la rueda
+            updateVolumeArc()
         }
     }
 }

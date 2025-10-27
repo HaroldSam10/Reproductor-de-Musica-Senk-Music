@@ -112,4 +112,20 @@ class MusicService : Service() {
             null
         }
     }
+
+    // "Palanca" para que la UI sepa la duración total
+    fun getDuration(): Int {
+        return mediaPlayer?.duration ?: 0
+    }
+
+    // "Palanca" para que la UI sepa dónde va
+    fun getCurrentPosition(): Int {
+        return mediaPlayer?.currentPosition ?: 0
+    }
+
+    // "Palanca" para que la UI le diga dónde ponerse
+    fun seekTo(position: Int) {
+        mediaPlayer?.seekTo(position)
+    }
+
 }
