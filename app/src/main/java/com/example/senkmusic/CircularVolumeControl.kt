@@ -8,7 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
-import kotlin.math.abs // <-- Importante para el umbral
+import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -19,19 +19,17 @@ class CircularVolumeControl @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    // --- Variables de dibujo (sin cambios) ---11
+    // --- Variables de dibujo (sin cambios) ---
     private val backgroundArcPaint: Paint
     private val progressArcPaint: Paint
     private val arcBounds = RectF()
     private var sweepAngle = 270f
     private val strokeWidth = 8f * resources.displayMetrics.density
 
-    // --- Listener (sin cambios) ---
+
     var onVolumeChanged: ((Float) -> Unit)? = null
 
-    // --- ¡NUEVAS! Variables para el Umbral ---
-    private var lastSentAngle = -1f // Guarda el último ángulo que SÍ actualizó el volumen
-    private val angleThreshold = 2.5f // Umbral: Solo actualiza si cambia más de 2.5 grados
+
 
     init {
         // --- Configuración de Pinceles (sin cambios) ---
@@ -50,7 +48,7 @@ class CircularVolumeControl @JvmOverloads constructor(
         }
     }
 
-    // --- onSizeChanged (sin cambios) ---
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         val padding = strokeWidth / 2
@@ -64,82 +62,74 @@ class CircularVolumeControl @JvmOverloads constructor(
         canvas.drawArc(arcBounds, 135f, sweepAngle, false, progressArcPaint)
     }
 
-    // --- setProgress (sin cambios) ---
+
     fun setProgress(progress: Float) {
         sweepAngle = (progress * 270f).coerceIn(0f, 270f) // Asegura que esté en rango
         invalidate()
     }
 
-    // --- ¡onTouchEvent ACTUALIZADO con Umbral! ---
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val centerX = width / 2f
         val centerY = height / 2f
         val x = event.x
         val y = event.y
 
-        // Chequeo de Radio (sin cambios)
+       
         val radius = width / 2f
         val touchRadius = sqrt((x - centerX).pow(2) + (y - centerY).pow(2))
-        val arcOuterRadius = radius - (strokeWidth / 4)
-        val arcInnerRadius = radius - strokeWidth * 1.5
+        val arcOuterRadius = radius
+        val arcInnerRadius = radius - strokeWidth * 2.0 // Área táctil generosa
         if (touchRadius < arcInnerRadius || touchRadius > arcOuterRadius) {
-            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-                return super.onTouchEvent(event)
-            }
+            if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) { return super.onTouchEvent(event) }
             return false // Ignorar toque fuera
         }
 
-        // Cálculo del Ángulo (sin cambios)
+        // Cálculo del Ángulo (0-360, 0 es ARRIBA, horario)
         var angle = Math.toDegrees(atan2(y - centerY, x - centerX).toDouble()) + 90
-        if (angle < 0) {
-            angle += 360
-        }
+        if (angle < 0) { angle += 360 }
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                // Al tocar, reseteamos el 'lastSentAngle' para forzar la primera actualización
-                lastSentAngle = -1f
-                // Calculamos el ángulo inicial y actualizamos INMEDIATAMENTE si está en zona activa
-                handleAngleUpdate(angle)
-                return true // ¡Sí, yo me encargo!
-            }
-            MotionEvent.ACTION_MOVE -> {
-                // Al mover, actualizamos solo si el ángulo cambió lo suficiente
-                handleAngleUpdate(angle)
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+
+                // Límites de la ZONA MUERTA INFERIOR
+                val deadZoneStart = 135.0
+                val deadZoneEnd = 225.0
+
+                // Límite VISUAL de inicio
+                val visualStartAngle = 135.0
+                val totalArcDegrees = 270.0
+
+                var calculatedSweepAngle: Double? = null
+
+                // Si NO está en zona muerta...
+                if (!(angle >= deadZoneStart && angle <= deadZoneEnd)) {
+
+                    // Calculamos el progreso relativo al inicio VISUAL
+                    if (angle >= 225) { // 225 a 360
+                        calculatedSweepAngle = angle - 225.0 // Mapea 225->0, 360->135
+                    } else { // 0 a <135 (pasó la zona muerta inicial)
+                        calculatedSweepAngle = (360.0 - 225.0) + angle // Mapea 0->135, 135->270
+                    }
+
+                    // --- ¡AQUÍ ESTÁ EL ARREGLO! ---
+                    // Solo procedemos si SÍ calculamos un ángulo (no era null)
+                    if (calculatedSweepAngle != null) {
+                        // Aseguramos rango 0-270
+                        sweepAngle = calculatedSweepAngle.coerceIn(0.0, totalArcDegrees).toFloat()
+                        invalidate() // Redibujar
+
+                        // Gritamos porcentaje 0-1
+                        val newPercentage = sweepAngle / totalArcDegrees.toFloat()
+                        onVolumeChanged?.invoke(newPercentage.coerceIn(0f, 1f))
+                    }
+
+                }
+
+
                 return true
             }
-            // Permitir otros gestos si no es DOWN o MOVE
             else -> return super.onTouchEvent(event)
         }
-    } // Fin de onTouchEvent
-
-
-    // --- ¡NUEVA FUNCIÓN HELPER con Umbral! ---
-    private fun handleAngleUpdate(currentAngle: Double) {
-        // 1. Normalizamos el ángulo (sin cambios)
-        var normalizedAngle = currentAngle - 135.0
-        if (normalizedAngle < 0) {
-            normalizedAngle += 360.0
-        }
-
-        // 2. Checamos si está DENTRO del rango activo (sin cambios)
-        if (normalizedAngle <= 270.0) {
-
-            // --- ¡LA CLAVE ESTÁ AQUÍ! ---
-            // Solo actualizamos si es el primer toque O si el cambio es mayor al umbral
-            if (lastSentAngle == -1f || abs(normalizedAngle - lastSentAngle) >= angleThreshold) {
-
-                sweepAngle = normalizedAngle.toFloat().coerceIn(0f, 270f) // Actualizamos ángulo visual
-                invalidate() // Redibujar
-
-                // Gritamos el porcentaje
-                val newPercentage = sweepAngle / 270f
-                onVolumeChanged?.invoke(newPercentage)
-
-                // Guardamos este ángulo como el último enviado
-                lastSentAngle = normalizedAngle.toFloat()
-            }
-        }
-        // Si está en zona muerta o no superó el umbral, no hacemos nada
     }
-} // Fin de la clase
+}
